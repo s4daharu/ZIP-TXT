@@ -543,7 +543,7 @@ ${fileLines.join('\n')}
 
         if (allFromSameZip && singleZipSourceName) {
             const zipBaseName = singleZipSourceName.replace(/\.zip$/i, '');
-            downloadFilename = `${zipBaseName} - Combined.txt`;
+            downloadFilename = `${zipBaseName}.txt`;
         } else {
             const dateStamp = new Date().toISOString().split('T')[0];
             downloadFilename = `combined_files_${dateStamp}.txt`;
