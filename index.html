@@ -72,7 +72,16 @@
             color: var(--text-primary);
             transition: all 0.3s ease;
             overflow-x: hidden;
+            /* Add padding to prevent content from being obscured by the mobile action bar */
+            padding-bottom: 80px;
         }
+
+        @media (min-width: 640px) {
+            body {
+                padding-bottom: 0;
+            }
+        }
+
 
         html {
             scroll-behavior: smooth;
@@ -550,6 +559,31 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* == NEW: MOBILE ACTION BAR STYLES == */
+        #mobileActionBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.75rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        @media (min-width: 640px) {
+            #mobileActionBar {
+                display: none;
+            }
+        }
+
+
     </style>
 </head>
 <body class="min-h-screen bg-gray-900 flex flex-col items-center pt-6 px-4 text-gray-200 font-sans">
@@ -653,12 +687,14 @@ dist/"></textarea>
             </div>
         </div>
 
-        <!-- Combine Button -->
-        <button id="combineButton" class="w-full px-5 py-3 bg-green-600 text-white rounded shadow-md hover:bg-green-700 active:bg-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold mb-4" disabled>
-            Combine <span id="fileCount">(0)</span> Files
-        </button>
+        <!-- Desktop Combine Button -->
+        <div class="hidden sm:block">
+            <button id="combineButton" class="w-full px-5 py-3 bg-green-600 text-white rounded shadow-md hover:bg-green-700 active:bg-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold mb-4" disabled>
+                Combine <span id="fileCount">(0)</span> Files
+            </button>
+        </div>
 
-        <!-- Download & Copy Area -->
+        <!-- Desktop Download & Copy Area -->
         <div id="outputArea" class="mt-2 text-center hidden space-y-2 sm:space-y-0 sm:space-x-2 sm:flex sm:justify-center">
             <a id="downloadLink" class="inline-block w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded shadow-md hover:bg-purple-700 active:bg-purple-800 transition-all text-sm font-medium truncate max-w-full" download="combined_files.txt"></a>
             <button id="copyButton" onclick="copyToClipboard()" class="inline-block w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded shadow-md hover:bg-indigo-700 active:bg-indigo-800 transition-all text-sm font-medium">
@@ -720,7 +756,7 @@ const dom = { // Gather all DOM element references in one place
     modeSplitButton: document.getElementById('modeSplitButton'),
     fileInput: document.getElementById('fileInput'),
     fileListContainer: document.getElementById('fileListContainer'),
-    combineButton: document.getElementById('combineButton'),
+    combineButton: document.getElementById('combineButton'), // Desktop button
     clearAllButton: document.getElementById('clearAllButton'),
     fileCountSpan: document.getElementById('fileCount'),
     outputArea: document.getElementById('outputArea'),
@@ -735,7 +771,6 @@ const dom = { // Gather all DOM element references in one place
     splitButton: document.getElementById('splitButton'),
     splitOutputArea: document.getElementById('splitOutputArea'),
     splitDownloadLink: document.getElementById('splitDownloadLink'),
-    // New Elements
     structureFormat: document.getElementById('structureFormat'),
     disableCommentsCheckbox: document.getElementById('disableCommentsCheckbox'),
     startComment: document.getElementById('startComment'),
@@ -750,6 +785,10 @@ const dom = { // Gather all DOM element references in one place
     statsModalBackdrop: document.getElementById('statsModalBackdrop'),
     closeStatsModal: document.getElementById('closeStatsModal'),
     statsContent: document.getElementById('statsContent'),
+    // NEW Mobile Elements
+    mobileActionBar: document.getElementById('mobileActionBar'),
+    mobileCombineButton: document.getElementById('mobileCombineButton'),
+    mobileFileCountSpan: document.getElementById('mobileFileCount'),
 };
 
 let appState = {
@@ -834,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.modeSplitButton.addEventListener('click', () => setMode('split'));
     dom.clearAllButton.addEventListener('click', clearAllFiles);
     dom.combineButton.addEventListener('click', combineFiles);
+    dom.mobileCombineButton.addEventListener('click', combineFiles); // Attach listener to mobile button
     dom.fileSearch.addEventListener('input', filterFileList);
     dom.saveConfigButton.addEventListener('click', saveConfig);
     dom.loadConfigButton.addEventListener('click', loadConfig);
@@ -853,6 +893,14 @@ function setMode(newMode) {
     dom.splitSection.classList.toggle('hidden', isCombine);
     dom.modeCombineButton.classList.toggle('active', isCombine);
     dom.modeSplitButton.classList.toggle('active', !isCombine);
+    
+    // NEW: Toggle mobile action bar visibility based on mode
+    if (dom.mobileActionBar) {
+        dom.mobileActionBar.style.display = isCombine ? 'flex' : 'none';
+        // Adjust body padding when switching modes
+        document.body.style.paddingBottom = isCombine ? '80px' : '0';
+    }
+
 
     if (isCombine) {
         dom.splitFileInput.value = '';
@@ -965,13 +1013,30 @@ function removeFile(id) {
 }
 
 // --- UI Update Functions ---
+
+// NEW helper function to update both combine buttons
+function updateCombineButtonsState() {
+    const count = appState.selectedFiles.length;
+    const isDisabled = count === 0;
+
+    // Desktop button
+    dom.combineButton.disabled = isDisabled;
+    dom.fileCountSpan.textContent = `(${count})`;
+
+    // Mobile button
+    dom.mobileCombineButton.disabled = isDisabled;
+    dom.mobileFileCountSpan.textContent = `(${count})`;
+}
+
 function updateUI() {
     updateFileListUI();
     const count = appState.selectedFiles.length;
-    dom.combineButton.disabled = count === 0;
+    
+    updateCombineButtonsState(); // Use the new helper function
+
     dom.clearAllButton.disabled = count === 0;
     dom.statsButton.disabled = count === 0;
-    dom.fileCountSpan.textContent = `(${count})`;
+
     dom.outputArea.classList.add('hidden');
     appState.lastCombinedContent = '';
     dom.copyStatusMessage.textContent = '';
@@ -1177,6 +1242,11 @@ function combineFiles() {
         dom.downloadLink.download = downloadFilename;
         dom.downloadLink.textContent = `Download ${downloadFilename}`;
         dom.outputArea.classList.remove('hidden');
+
+        // On mobile, after combining, scroll to the top to see the download/copy links
+        if (isMobileDevice()) {
+            window.scrollTo({ top: dom.outputArea.offsetTop, behavior: 'smooth' });
+        }
     } catch (e) {
         displayError(`Error creating download file: ${e.message}`, 0);
     }
@@ -1371,6 +1441,13 @@ function hideStatsModal() {
 }
 
 </script>
+
+<!-- NEW: Mobile Action Bar -->
+<div id="mobileActionBar">
+    <button id="mobileCombineButton" class="w-full px-5 py-3 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 active:bg-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold" disabled>
+        Combine <span id="mobileFileCount">(0)</span> Files
+    </button>
+</div>
 
 </body>
 </html>
