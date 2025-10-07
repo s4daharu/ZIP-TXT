@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>File Combiner & Splitter Pro</title>
+    <title>File Combiner Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Frameworks and Icons -->
@@ -17,135 +17,95 @@
     <!-- Main Application Container -->
     <main class="container main-container">
         <div id="mainCard" class="card-panel">
-            <h1 class="center-align gradient-text">File Combiner & Splitter Pro</h1>
+            <h1 class="center-align gradient-text">File Combiner Pro</h1>
+            <p class="center-align grey-text">Combine multiple files into a single text file.</p>
 
-            <!-- Mode Switcher Tabs -->
-            <div class="row">
-                <div class="col s12">
-                    <ul class="tabs">
-                        <li class="tab col s6"><a class="active" href="#combineSection">Combine</a></li>
-                        <li class="tab col s6"><a href="#splitSection">Split</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- ===== COMBINE MODE SECTION ===== -->
-            <div id="combineSection" class="col s12">
-                <!-- Configuration Accordion -->
-                <ul class="collapsible">
-                    <li>
-                        <div class="collapsible-header"><i class="material-icons">settings</i>Options & Configuration</div>
-                        <div class="collapsible-body">
-                            <div class="row option-row">
-                                <div class="input-field col s12">
-                                    <select id="structureFormat">
-                                        <option value="tree">Tree</option><option value="flat">Flat List</option><option value="simple">Numbered List</option><option value="detailed">Detailed Summary</option><option value="markdown">Markdown List</option><option value="none">None</option>
-                                    </select>
-                                    <label>Structure Format</label>
-                                </div>
-                                <div class="input-field col s12">
-                                    <p><label><input type="checkbox" id="disableCommentsCheckbox" /><span>Disable Start/End Comments</span></label></p>
-                                </div>
-                                <div class="input-field col s12">
-                                    <input id="startComment" type="text" value="/* ==== START {index}/{totalFiles} - {filename} ({path}) ==== */">
-                                    <label for="startComment">Start Comment Template</label>
-                                </div>
-                                <div class="input-field col s12">
-                                    <input id="endComment" type="text" value="/* ==== END - {filename} ==== */">
-                                    <label for="endComment">End Comment Template</label>
-                                </div>
-                                <div class="input-field col s12">
-                                    <textarea id="exclusionFilter" class="materialize-textarea" placeholder="e.g., node_modules/&#10;*.log"></textarea>
-                                    <label for="exclusionFilter">Exclusion Filter (gitignore style)</label>
-                                </div>
-                                <div class="col s12 config-buttons">
-                                    <button id="saveConfigButton" class="btn-small waves-effect waves-light grey darken-1">Save</button>
-                                    <button id="loadConfigButton" class="btn-small waves-effect waves-light grey darken-1">Load</button>
-                                    <span id="configStatus" class="right green-text text-accent-3"></span>
-                                </div>
+            <!-- Configuration Accordion -->
+            <ul class="collapsible">
+                <li>
+                    <div class="collapsible-header"><i class="material-icons">settings</i>Options & Configuration</div>
+                    <div class="collapsible-body">
+                        <div class="row option-row">
+                            <div class="input-field col s12">
+                                <select id="structureFormat">
+                                    <option value="tree">Tree</option><option value="flat">Flat List</option><option value="simple">Numbered List</option><option value="detailed">Detailed Summary</option><option value="markdown">Markdown List</option><option value="none">None</option>
+                                </select>
+                                <label>Structure Format</label>
+                            </div>
+                            <div class="input-field col s12">
+                                <p><label><input type="checkbox" id="disableCommentsCheckbox" /><span>Disable Start/End Comments</span></label></p>
+                            </div>
+                            <div class="input-field col s12">
+                                <input id="startComment" type="text" value="/* ==== START {index}/{totalFiles} - {filename} ({path}) ==== */">
+                                <label for="startComment">Start Comment Template</label>
+                            </div>
+                            <div class="input-field col s12">
+                                <input id="endComment" type="text" value="/* ==== END - {filename} ==== */">
+                                <label for="endComment">End Comment Template</label>
+                            </div>
+                            <div class="input-field col s12">
+                                <textarea id="exclusionFilter" class="materialize-textarea" placeholder="e.g., node_modules/&#10;*.log"></textarea>
+                                <label for="exclusionFilter">Exclusion Filter (gitignore style)</label>
+                            </div>
+                            <div class="col s12 config-buttons">
+                                <button id="saveConfigButton" class="btn-small waves-effect waves-light grey darken-1">Save</button>
+                                <button id="loadConfigButton" class="btn-small waves-effect waves-light grey darken-1">Load</button>
+                                <span id="configStatus" class="right green-text text-accent-3"></span>
                             </div>
                         </div>
-                    </li>
-                </ul>
-
-                <!-- File Input -->
-                <div class="file-field input-field center-align">
-                    <a id="fileInputTrigger" class="btn-large waves-effect waves-light accent-gradient">
-                        <span><i class="material-icons left">add_circle_outline</i>Add Files / Folder</span>
-                        <input type="file" id="fileInput" multiple webkitdirectory directory>
-                    </a>
-                    <p class="grey-text helper-text">Or drag and drop files/folders here.</p>
-                </div>
-                
-                <div id="processingIndicator" class="center-align processing-indicator">
-                    <div class="preloader-wrapper small active"><div class="spinner-layer"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div>
-                    <p id="processingText">Processing...</p>
-                </div>
-                
-                <!-- File List & Actions -->
-                <div class="file-list-area">
-                    <div class="row valign-wrapper file-list-header">
-                        <div class="col s6"><label>Selected Files:</label></div>
-                        <div class="col s6 right-align">
-                            <button id="statsButton" class="btn-small waves-effect waves-light teal disabled">Stats</button>
-                            <button id="clearAllButton" class="btn-small waves-effect waves-light red disabled">Clear</button>
-                        </div>
                     </div>
-                    <ul id="fileListContainer" class="collection">
-                        <li id="noFilesMessage" class="collection-item center-align grey-text">No files selected.</li>
-                    </ul>
-                </div>
+                </li>
+            </ul>
 
-                <!-- Desktop Combine Button -->
-                <div class="center-align action-button-area">
-                    <button id="combineButton" class="btn-large waves-effect waves-light green darken-1 disabled hide-on-small-only">
-                        <i class="material-icons left">merge_type</i>Combine <span id="fileCount">(0)</span> Files
-                    </button>
-                </div>
-
-                <!-- Download & Copy Area -->
-                <div id="outputArea" class="center-align output-area">
-                    <a id="downloadLink" class="btn waves-effect waves-light purple" download="combined_files.txt"></a>
-                    <button id="copyButton" class="btn waves-effect waves-light indigo">Copy</button>
-                    <p id="copyStatusMessage" class="green-text text-accent-3 status-message"></p>
-                </div>
-            </div>
-
-            <!-- ===== SPLIT MODE SECTION ===== -->
-            <div id="splitSection" class="col s12">
-                <p class="center-align grey-text">Select a `.txt` file created by this tool to split it.</p>
-                <div class="file-field input-field center-align">
-                    <a class="btn-large waves-effect waves-light accent-gradient">
-                        <span><i class="material-icons left">attach_file</i>Select .txt File</span>
-                        <input type="file" id="splitFileInput" accept=".txt">
-                    </a>
-                </div>
-                <div id="splitFileInfo" class="center-align grey-text file-info-text"></div>
-                <div class="center-align action-button-area">
-                    <button id="splitButton" class="btn-large waves-effect waves-light green darken-1 disabled">
-                        <i class="material-icons left">call_split</i>Split & Create Zip
-                    </button>
-                </div>
-                <div id="splitOutputArea" class="center-align output-area">
-                    <a id="splitDownloadLink" class="btn waves-effect waves-light purple"></a>
-                </div>
+            <!-- File Input -->
+            <div class="file-field input-field center-align">
+                <a id="fileInputTrigger" class="btn-large waves-effect waves-light accent-gradient">
+                    <span><i class="material-icons left">add_circle_outline</i>Add Files / Folder / Zip</span>
+                    <input type="file" id="fileInput" multiple webkitdirectory directory>
+                </a>
+                <p class="grey-text helper-text">Or drag and drop files/folders here.</p>
             </div>
             
-            <p id="errorMessage" class="red-text center-align status-message"></p>
+            <div id="processingIndicator" class="center-align processing-indicator">
+                <div class="preloader-wrapper small active"><div class="spinner-layer"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div>
+                <p>Processing...</p>
+            </div>
+            
+            <!-- File List & Actions -->
+            <div class="file-list-area">
+                <div class="row valign-wrapper file-list-header">
+                    <div class="col s6"><label>Selected Files:</label></div>
+                    <div class="col s6 right-align">
+                        <button id="statsButton" class="btn-small waves-effect waves-light teal disabled">Stats</button>
+                        <button id="clearAllButton" class="btn-small waves-effect waves-light red disabled">Clear</button>
+                    </div>
+                </div>
+                <ul id="fileListContainer" class="collection">
+                    <li id="noFilesMessage" class="collection-item center-align grey-text">No files selected.</li>
+                </ul>
+            </div>
+
+            <!-- Primary Action Button -->
+            <div class="center-align action-button-area">
+                <button id="combineButton" class="btn-large waves-effect waves-light green darken-1 disabled">
+                    <i class="material-icons left">merge_type</i>Combine <span id="fileCount">(0)</span> Files
+                </button>
+            </div>
+
+            <!-- Download & Copy Area -->
+            <div id="outputArea" class="center-align output-area">
+                <a id="downloadLink" class="btn waves-effect waves-light purple" download="combined_files.txt"></a>
+                <button id="copyButton" class="btn waves-effect waves-light indigo">Copy to Clipboard</button>
+                <p id="copyStatusMessage" class="green-text text-accent-3 status-message"></p>
+            </div>
         </div>
     </main>
     
-    <!-- Floating Action Buttons -->
+    <!-- Floating Action Button for Theme Toggle -->
     <div class="fixed-action-btn">
         <a id="themeToggle" class="btn-floating btn-large grey darken-2">
             <i class="large material-icons">brightness_4</i>
         </a>
-    </div>
-
-    <div id="mobileCombineFab" class="fixed-action-btn hide-on-med-and-up mobile-fab">
-        <button id="mobileCombineButton" class="btn-floating btn-large waves-effect waves-light green darken-1 disabled">
-            <i class="material-icons">merge_type</i>
-        </button>
     </div>
 
     <!-- Statistics Modal -->

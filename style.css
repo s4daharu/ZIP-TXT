@@ -40,6 +40,7 @@ body {
 .main-container {
     max-width: 720px;
     margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 .card-panel {
     background-color: var(--bg-card);
@@ -76,12 +77,6 @@ h1, h2, h3, h4, h5, h6 { color: var(--text-primary); }
 .select-wrapper .caret { fill: var(--text-primary); }
 .dropdown-content { background-color: var(--bg-card); }
 .dropdown-content li > span { color: var(--text-primary); }
-
-/* Tabs (Mode Switcher) */
-.tabs { background-color: transparent; }
-.tabs .tab a { color: var(--text-secondary); }
-.tabs .tab a:hover, .tabs .tab a.active { color: var(--accent-color); }
-.tabs .indicator { background-color: var(--accent-color); }
 
 /* Collapsible (Options) */
 .collapsible-header { background-color: var(--bg-secondary); }
@@ -123,8 +118,6 @@ h1, h2, h3, h4, h5, h6 { color: var(--text-primary); }
 .action-button-area { margin-top: 2rem; }
 .output-area { display: none; margin-top: 1rem; }
 .status-message { margin-top: 8px; height: 1.2rem; }
-.file-info-text { height: 1.5rem; }
-.mobile-fab { bottom: 24px; right: 90px; }
 
 /* Drag & Drop Highlight */
 .drag-over {
@@ -137,8 +130,3 @@ h1, h2, h3, h4, h5, h6 { color: var(--text-primary); }
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #777; }
-
-/* Mobile Layout Adjustments */
-@media (max-width: 600px) {
-    body { padding-bottom: 80px; }
-}

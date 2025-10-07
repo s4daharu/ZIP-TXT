@@ -23,7 +23,6 @@
         fileListContainer: document.getElementById('fileListContainer'),
         noFilesMessage: document.getElementById('noFilesMessage'),
         combineButton: document.getElementById('combineButton'),
-        mobileCombineButton: document.getElementById('mobileCombineButton'),
         clearAllButton: document.getElementById('clearAllButton'),
         fileCountSpan: document.getElementById('fileCount'),
         outputArea: document.getElementById('outputArea'),
@@ -31,11 +30,6 @@
         copyButton: document.getElementById('copyButton'),
         copyStatusMessage: document.getElementById('copyStatusMessage'),
         processingIndicator: document.getElementById('processingIndicator'),
-        splitFileInput: document.getElementById('splitFileInput'),
-        splitFileInfo: document.getElementById('splitFileInfo'),
-        splitButton: document.getElementById('splitButton'),
-        splitOutputArea: document.getElementById('splitOutputArea'),
-        splitDownloadLink: document.getElementById('splitDownloadLink'),
         structureFormat: document.getElementById('structureFormat'),
         disableCommentsCheckbox: document.getElementById('disableCommentsCheckbox'),
         startComment: document.getElementById('startComment'),
@@ -48,7 +42,6 @@
         statsModal: document.getElementById('statsModal'),
         statsContent: document.getElementById('statsContent'),
         themeToggle: document.getElementById('themeToggle'),
-        mobileCombineFab: document.getElementById('mobileCombineFab'),
     };
 
     // --- UTILITY FUNCTIONS ---
@@ -80,7 +73,6 @@
     // --- UI MANIPULATION ---
     const ui = {
         initMaterialize() {
-            state.instances.tabs = M.Tabs.init(document.querySelector('.tabs'));
             state.instances.select = M.FormSelect.init(dom.structureFormat);
             state.instances.collapsible = M.Collapsible.init(document.querySelector('.collapsible'));
             state.instances.statsModal = M.Modal.init(dom.statsModal);
@@ -90,20 +82,6 @@
             document.documentElement.setAttribute('data-theme', theme);
             dom.themeToggle.querySelector('i').textContent = theme === 'dark' ? 'brightness_7' : 'brightness_4';
         },
-        updateCombineButtons() {
-            const count = state.selectedFiles.length;
-            const isDisabled = count === 0;
-            [dom.combineButton, dom.mobileCombineButton].forEach(btn => {
-                isDisabled ? btn.classList.add('disabled') : btn.classList.remove('disabled');
-            });
-            dom.fileCountSpan.textContent = `(${count})`;
-        },
-        updateActionButtons() {
-            const isDisabled = state.selectedFiles.length === 0;
-            [dom.clearAllButton, dom.statsButton].forEach(btn => {
-                isDisabled ? btn.classList.add('disabled') : btn.classList.remove('disabled');
-            });
-        },
         updateFileList() {
             dom.fileListContainer.innerHTML = '';
             if (state.selectedFiles.length === 0) {
@@ -112,7 +90,6 @@
                 state.selectedFiles.forEach(f => {
                     const li = document.createElement('li');
                     li.className = 'collection-item';
-                    li.dataset.id = f.id;
                     const fileNameSpan = document.createElement('span');
                     fileNameSpan.className = 'file-name';
                     fileNameSpan.textContent = f.displayName;
@@ -137,9 +114,20 @@
             }
         },
         updateAll() {
+            const count = state.selectedFiles.length;
+            const isDisabled = count === 0;
+
+            // Update file list
             this.updateFileList();
-            this.updateCombineButtons();
-            this.updateActionButtons();
+
+            // Update buttons
+            isDisabled ? dom.combineButton.classList.add('disabled') : dom.combineButton.classList.remove('disabled');
+            dom.fileCountSpan.textContent = `(${count})`;
+            [dom.clearAllButton, dom.statsButton].forEach(btn => {
+                isDisabled ? btn.classList.add('disabled') : btn.classList.remove('disabled');
+            });
+
+            // Reset output
             this.resetOutputArea();
         }
     };
@@ -154,7 +142,7 @@
         },
         async handleFileChange(event) {
             await core.processFileSources(Array.from(event.target.files));
-            event.target.value = ''; // Reset input
+            event.target.value = '';
         },
         handleRemoveFile(id) {
             state.selectedFiles = state.selectedFiles.filter(f => f.id !== id);
@@ -186,7 +174,7 @@
                 dom.startComment.value = settings.startComment || '/* ==== START {index}/{totalFiles} - {filename} ({path}) ==== */';
                 dom.endComment.value = settings.endComment || '/* ==== END - {filename} ==== */';
                 dom.exclusionFilter.value = settings.exclusionFilter || '';
-                M.updateTextFields(); // Important for labels
+                M.updateTextFields();
                 dom.configStatus.textContent = 'Loaded!';
                 setTimeout(() => dom.configStatus.textContent = '', 2000);
             }
@@ -207,25 +195,14 @@
                 utils.displayError(`Failed to copy: ${err}`);
             }
         },
-        handleSplitFileChange() {
-            dom.splitOutputArea.style.display = 'none';
-            if (dom.splitDownloadLink.href) URL.revokeObjectURL(dom.splitDownloadLink.href);
-            const file = dom.splitFileInput.files[0];
-            dom.splitFileInfo.textContent = file ? file.name : '';
-            file ? dom.splitButton.classList.remove('disabled') : dom.splitButton.classList.add('disabled');
-        },
-        // Drag and Drop Handlers
         handleDragEnter(e) { e.preventDefault(); e.stopPropagation(); dom.mainCard.classList.add('drag-over'); },
         handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); dom.mainCard.classList.remove('drag-over'); },
         async handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             dom.mainCard.classList.remove('drag-over');
-            
             const items = e.dataTransfer.items;
             const files = [];
             const entryPromises = [];
-    
             async function scanFiles(entry) {
                 if (entry.isFile) {
                     return new Promise(resolve => entry.file(file => { files.push(file); resolve(); }));
@@ -235,7 +212,6 @@
                     await Promise.all(entries.map(scanFiles));
                 }
             }
-    
             for (const item of items) {
                 const entry = item.webkitGetAsEntry();
                 if (entry) entryPromises.push(scanFiles(entry));
@@ -287,7 +263,6 @@
             } else if (sources.length > 0) {
                 utils.displayError('No new processable text files found.');
             }
-
             dom.processingIndicator.style.display = 'none';
             ui.updateAll();
         },
@@ -296,7 +271,6 @@
                 utils.displayError("No files to combine.");
                 return;
             }
-            // ... (The core combining logic is complex and remains the same as before)
             const manifest = state.selectedFiles.map(f => ({ path: f.displayName, size: f.content.length })); 
             let combinedContent = `/* FCS_MANIFEST_V1:${JSON.stringify(manifest)} */\n\n`; 
             const structureFormat = dom.structureFormat.value; 
@@ -322,36 +296,7 @@
             dom.downloadLink.textContent = `Download Combined File`; 
             dom.outputArea.style.display = 'block';
         },
-        async splitAndZip() {
-            // ... (The core splitting logic is complex and remains the same as before)
-            const file = dom.splitFileInput.files[0]; if (!file) return; 
-            dom.splitButton.classList.add('disabled'); 
-            dom.splitButton.innerHTML = '<div class="preloader-wrapper small active" style="width:24px; height:24px; vertical-align: middle;"><div class="spinner-layer"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div>'; 
-            try { 
-                const text = await utils.readFileAsText(file); const zip = new JSZip(); 
-                const manifestMatch = text.match(/\/\*\s*FCS_MANIFEST_V1:(\[.*?\])\s*\*\//); 
-                if (manifestMatch && manifestMatch[1]) { 
-                    const manifest = JSON.parse(manifestMatch[1]); let textCursor = text.substring(manifestMatch.index + manifestMatch[0].length); 
-                    const firstStartCommentMatch = textCursor.match(/\/\*\s*====\s*START/); 
-                    if (firstStartCommentMatch) { textCursor = textCursor.substring(firstStartCommentMatch.index); } else { const startOfContent = text.indexOf('\n\n', manifestMatch.index + manifestMatch[0].length) + 2; textCursor = startOfContent > 1 ? text.substring(startOfContent) : text.substring(manifestMatch.index + manifestMatch[0].length).trim(); } 
-                    for (const fileEntry of manifest) { const fileContent = textCursor.substring(0, fileEntry.size); zip.file(fileEntry.path, fileContent); let chunkToEnd = textCursor.substring(fileEntry.size); const nextStartCommentMatch = chunkToEnd.match(/\/\*\s*====\s*START/); if (nextStartCommentMatch) { textCursor = chunkToEnd.substring(nextStartCommentMatch.index); } } 
-                } else { 
-                    const startCommentRegex = /\/\*\s*====\s*START\s*\d+\/\d+\s*-\s*(.*?)\s*\((.*?)\)\s*====\s*\*\//g; 
-                    const matches = [...text.matchAll(startCommentRegex)]; if (matches.length === 0) throw new Error("Invalid format. No file start comments found."); 
-                    for (let i = 0; i < matches.length; i++) { const match = matches[i]; const nextMatch = matches[i + 1]; const path = match[2].trim(); if (!path) continue; const contentStartIndex = match.index + match[0].length; const contentEndIndex = nextMatch ? nextMatch.index : text.length; let content = text.substring(contentStartIndex, contentEndIndex).replace(/\/\*\s*====\s*END\s*-\s*.*?\s*====\s*\*\//, '').trim(); zip.file(path, content); } 
-                } 
-                const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" }); 
-                const url = URL.createObjectURL(zipBlob); 
-                const downloadFilename = `${file.name.replace(/\.txt$/i, '')}_split.zip`; 
-                if (dom.splitDownloadLink.href) URL.revokeObjectURL(dom.splitDownloadLink.href); 
-                dom.splitDownloadLink.href = url; dom.splitDownloadLink.download = downloadFilename; 
-                dom.splitDownloadLink.textContent = `Download ${downloadFilename}`; 
-                dom.splitOutputArea.style.display = 'block'; 
-            } catch (err) { utils.displayError(`Error splitting file: ${err.message}`); } 
-            finally { dom.splitButton.classList.remove('disabled'); dom.splitButton.innerHTML = '<i class="material-icons left">call_split</i>Split & Create Zip'; }
-        },
         generateAndShowStats() {
-            // ... (The core stats generation logic is the same)
             const totals = { files: 0, size: 0, lines: 0, chars: 0 }; const byExtension = {}; 
             state.selectedFiles.forEach(file => { const ext = utils.getFileExtension(file.displayName) || 'other'; const lines = file.content.split('\n').length; const chars = file.content.length; totals.files++; totals.size += file.originalSize; totals.lines += lines; totals.chars += chars; if (!byExtension[ext]) byExtension[ext] = { files: 0, size: 0, lines: 0, chars: 0 }; byExtension[ext].files++; byExtension[ext].size += file.originalSize; byExtension[ext].lines += lines; byExtension[ext].chars += chars; }); 
             let html = `<div class="row"><div class="col s6 m3 center-align"><h5>${totals.files.toLocaleString()}</h5><p class="grey-text">Files</p></div><div class="col s6 m3 center-align"><h5>${utils.formatBytes(totals.size)}</h5><p class="grey-text">Size</p></div><div class="col s6 m3 center-align"><h5>${totals.lines.toLocaleString()}</h5><p class="grey-text">Lines</p></div><div class="col s6 m3 center-align"><h5>${totals.chars.toLocaleString()}</h5><p class="grey-text">Characters</p></div></div><h6>By File Type</h6><table class="striped"><thead><tr><th>Extension</th><th class="right-align">Files</th><th class="right-align">Size</th><th class="right-align">Lines</th></tr></thead><tbody>`; 
@@ -360,7 +305,7 @@
             dom.statsContent.innerHTML = html; 
             state.instances.statsModal.open();
         },
-        // --- Structure Generation Functions --- (These are helpers for combineFiles)
+        // --- Structure Generation Functions ---
         generateTreeStructure: (files) => {
             const buildFileTree = (files) => { const tree = {}; files.forEach(f => { const segments = f.displayName.split('/').filter(Boolean); let currentLevel = tree; segments.forEach((segment, index) => { if (index === segments.length - 1) { if (!currentLevel.files) currentLevel.files = []; currentLevel.files.push(segment); } else { if (!currentLevel[segment]) currentLevel[segment] = { files: [] }; currentLevel = currentLevel[segment]; } }); }); return tree; };
             const renderTree = (node, depth = 0) => { let output = ''; const indent = '  '.repeat(depth); Object.keys(node).sort().forEach(key => { if (key !== 'files') { output += `${indent}└─ ${key}/\n`; output += renderTree(node[key], depth + 1); } }); if (node.files) { node.files.sort().forEach(file => { output += `${indent}└─ ${file}\n`; }); } return output; };
@@ -379,15 +324,10 @@
             dom.fileInput.addEventListener('change', handlers.handleFileChange);
             dom.clearAllButton.addEventListener('click', handlers.handleClearAll);
             dom.combineButton.addEventListener('click', core.combineFiles);
-            dom.mobileCombineButton.addEventListener('click', core.combineFiles);
             dom.saveConfigButton.addEventListener('click', handlers.handleSaveConfig);
             dom.loadConfigButton.addEventListener('click', handlers.handleLoadConfig);
             dom.statsButton.addEventListener('click', handlers.handleStatsClick);
             dom.copyButton.addEventListener('click', handlers.handleCopyToClipboard);
-            dom.splitFileInput.addEventListener('change', handlers.handleSplitFileChange);
-            dom.splitButton.addEventListener('click', core.splitAndZip);
-
-            // Drag and Drop
             dom.mainCard.addEventListener('dragenter', handlers.handleDragEnter, false);
             dom.mainCard.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); }, false);
             dom.mainCard.addEventListener('dragleave', handlers.handleDragLeave, false);
